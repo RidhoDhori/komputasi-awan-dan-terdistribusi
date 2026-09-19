@@ -4,9 +4,10 @@
 
 | Nama | NIM | Kontribusi |
 |---|---|---|
-| [nama 1] | [nim] | [pitfall/bagian yang dikerjakan] |
-| [nama 2] | [nim] | [pitfall/bagian yang dikerjakan] |
-| [nama 3] | [nim] | [pitfall/bagian yang dikerjakan] |
+| [RIDHO BINTANG ADWITYA] | [103072400015] | [bandwidth is infinite] |
+| [RANGGA DANI PRASETYA] | [103072400057] | [the network is reliable] |
+| [RESTU FADILAH AL FATAH] | [103072400081] | [latency is zero] |
+| [ALBERTRIO SURANTA GINTING] | [103072400081] | [transport cost is zero] |
 
 ## Pitfall 1: [nama pitfall] — ditulis oleh [nama]
 
