@@ -29,9 +29,17 @@
 
 ---
 
-## Pitfall 3: [nama pitfall] — ditulis oleh [nama]
+## Pitfall 3: (latency is zero) — ditulis oleh Restu Fadilah Al Fatah
+**Bukti di skenario:** kode FoodGo melakukan komunikasi antar-service tanpa menerapkan mekanisme timeout. Modul pesanan memanggil modul pembayaran dan terus menunggu tanpa batas waktu yang ditentukan. Akibatnya, aplikasi mengalami perlambatan yang signifikan dan beberapa permintaan akhirnya mengalami timeout
 
-(ulangi struktur di atas)
+**Kenapa ini keliru:** Asumsi latency is zero menganggap komunikasi antar-komponen berlangsung tanpa jeda. Padahal, dalam sistem terdistribusi, setiap komunikasi antar-service membutuhkan waktu untuk mengirim, memproses, dan menerima respons. Pada FoodGo, keterlambatan modul pembayaran dapat membuat modul pesanan ikut menunggu. Kondisi ini semakin terasa ketika jumlah pesanan meningkat sehingga banyak permintaan menunggu respons pembayaran.
+
+**Dampak ke FoodGo:** Dampaknya, permintaan pada modul pesanan dapat menumpuk karena menunggu respons pembayaran. Tanpa timeout, proses dapat berlangsung terlalu lama dan menghabiskan resource seperti thread dan koneksi. Saat trafik meningkat, kondisi ini membuat aplikasi semakin lambat, beberapa request mengalami timeout, bahkan dapat menyebabkan server overload hingga crash.
+
+**Solusi desain awal:** Solusi yang dapat diterapkan adalah menggunakan *timeout* agar waktu tunggu respons memiliki batas. Jika terjadi kegagalan sementara, sistem dapat melakukan *retry* dengan jeda yang semakin panjang. Selain itu, *circuit breaker* dapat digunakan untuk menghentikan sementara pemanggilan ketika modul pembayaran terus mengalami masalah. Untuk proses yang tidak membutuhkan respons langsung, komunikasi dapat dilakukan secara *asynchronous* agar modul pesanan tidak perlu menunggu.
+
+
+**Trade-off:** Penggunaan retry memiliki risiko karena dapat membantu saat gangguan bersifat sementara, tetapi jika modul pembayaran sedang overload, percobaan ulang justru menambah beban sistem. Karena itu, retry perlu dibatasi dan menggunakan backoff agar request tidak terus bertambah saat terjadi gangguan.
 
 ---
 
