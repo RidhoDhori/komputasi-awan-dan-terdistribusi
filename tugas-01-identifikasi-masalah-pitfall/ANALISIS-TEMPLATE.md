@@ -9,17 +9,17 @@
 | [RESTU FADILAH AL FATAH] | [103072400081] | [latency is zero] |
 | [ALBERTRIO SURANTA GINTING] | [103072400081] | [single point of failure] |
 
-## Pitfall 1: [nama pitfall] — ditulis oleh [nama]
+## Pitfall 1: (Bandwidth is Infinite) — ditulis oleh Ridho Bintang Adwitya
 
-**Bukti di skenario:** [kutip/paraphrase bagian skenario]
+**Bukti di skenario:** Aplikasi jadi sangat lambat, beberapa permintaan timeout... Saat trafik naik, satu server... kewalahan.
 
-**Kenapa ini keliru:** [penjelasan]
+**Kenapa ini keliru:** Kapasitas jaringan dan I/O server memiliki batas fisik. Menganggap bandwidth tak terbatas saat mengirim data besar (gambar makanan, detail pesanan, notifikasi) akan menciptakan kemacetan data.
 
-**Dampak ke FoodGo:** [mekanisme kegagalan konkret]
+**Dampak ke FoodGo:** Saat jam makan siang, antrean request menumpuk bukan karena logika error, tapi karena "jalan raya" data (bandwidth/network I/O) penuh. Server menghabiskan waktu hanya untuk mengirim/menerima data, bukan memprosesnya.
 
-**Solusi desain awal:** [usulan solusi]
+**Solusi desain awal:** Kompresi data (seperti Gzip), pagination pada daftar menu, dan memisahkan aset statis (gambar) ke CDN (Content Delivery Network).
 
-**Trade-off:** [apa yang dikorbankan/risiko dari solusi ini]
+**Trade-off:** Kompresi data menghemat bandwidth, tetapi membebani CPU server untuk melakukan kompresi/dekompresi. Ini adalah pertukaran antara penggunaan CPU dan penggunaan jaringan.
 
 ---
 
