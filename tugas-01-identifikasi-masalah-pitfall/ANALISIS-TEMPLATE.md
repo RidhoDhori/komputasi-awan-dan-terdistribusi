@@ -1,13 +1,13 @@
 # Tugas 1 — Analisis Pitfall FoodGo
 
-**Kelompok:** [nama kelompok]
+**Kelompok:** [7 - mafia dodol gresik]
 
 | Nama | NIM | Kontribusi |
 |---|---|---|
 | [RIDHO BINTANG ADWITYA] | [103072400015] | [bandwidth is infinite] |
 | [RANGGA DANI PRASETYA] | [103072400057] | [the network is reliable] |
 | [RESTU FADILAH AL FATAH] | [103072400081] | [latency is zero] |
-| [ALBERTRIO SURANTA GINTING] | [103072400081] | [single point of failure] |
+| [ALBERTRIO SURANTA GINTING] | [103072400128] | [single point of failure] |
 
 ## Pitfall 1: (Bandwidth is Infinite) — ditulis oleh Ridho Bintang Adwitya
 
@@ -23,9 +23,17 @@
 
 ---
 
-## Pitfall 2: [nama pitfall] — ditulis oleh [nama]
+## Pitfall 2: (the network is reliable) — ditulis oleh RANGGA DANI PRASETYA
 
-(ulangi struktur di atas)
+**Bukti di skenario:** Menemukan komentar kode network is always reliable, no need for retry. Pemanggilan dari modul pesanan ke modul pembayaran juga tidak memakai timeout sama sekali, sehingga modul pesanan menunggu tanpa batas waktu.
+
+**Kenapa ini keliru:** Jaringan bisa mengalami packet loss, latensi yang tidak stabil, koneksi terputus, atau service tujuan yang lambat bahkan mati. Saat pemanggilan antarservice, kegagalan bisa terjadi secara parsial, yaitu ketika sebagian komponen masih berjalan, sedangkan komponen lainnya mengalami kegagalan. Pemanggil juga sulit membedakan apakah service sedang lambat atau sudah mati.
+
+**Dampak ke FoodGo:** Saat trafik meningkat, pembayaran melambat dan tanpa timeout membuat thread serta koneksi tertahan hingga sumber daya habis, sehingga request lain ikut mengantre, beban semakin tinggi akibat pengguna menekan tombol berulang kali, dan server bisa crash hingga menjatuhkan seluruh modul.
+
+**Solusi desain awal:** Menerapkan timeout pada setiap pemanggilan antarservice, retry terbatas dengan exponential backoff dan jitter serta idempotency key pada pembayaran, circuit breaker dan bulkhead untuk membatasi dampak kegagalan, serta message queue untuk pekerjaan asinkron seperti notifikasi kurir.
+
+**Trade-off:** Jika timeout terlalu singkat, request bisa dianggap gagal padahal masih bisa berhasil, sedangkan timeout terlalu lama membuat sumber daya terus terpakai. Retry juga bisa menambah beban server, circuit breaker dan bulkhead bisa menolak request yang sebenarnya masih bisa diproses, sedangkan message queue membuat data tidak selalu langsung diperbarui dan sistem menjadi lebih rumit untuk dikelola.
 
 ---
 
