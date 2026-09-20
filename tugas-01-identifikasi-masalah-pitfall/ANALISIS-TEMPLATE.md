@@ -67,4 +67,6 @@
 
 ## Kesimpulan Kelompok
 
-[Ringkasan: jika FoodGo memperbaiki ketiga pitfall ini, apa arsitektur yang disarankan secara garis besar? Kaitkan dengan Tugas 2.]
+Kegagalan sistem FoodGo bukanlah akibat dari satu bug tunggal, melainkan efek domino yang saling memperparah. Lonjakan trafik membebani kapasitas jaringan (analisis Ridho) dan memperlambat komunikasi antar-modul (analisis Restu). Karena kode tidak memiliki mekanisme pertahanan seperti timeout atau retry yang benar (analisis Rangga), thread server menumpuk dan habis. Puncak kegagalan terjadi karena semua modul ini dipaksa berjalan dalam satu proses monolitik (analisis Albertrio), sehingga kemacetan di satu modul langsung menyedot seluruh resource dan menjatuhkan seluruh sistem.
+
+Solusi yang diusulkan (CDN, Circuit Breaker, Message Queue, hingga migrasi Microservices) akan efektif mencegah keruntuhan sistem dan memungkinkan independent scaling. Namun, kelompok kami menyadari bahwa tidak ada solusi gratis dalam sistem terdistribusi. Trade-off utama dari peningkatan ketahanan ini adalah lonjakan kompleksitas operasional dan arsitektur. Tim FoodGo harus siap mengelola konsistensi data terdistribusi, monitoring yang terfragmentasi, dan logika bisnis yang lebih rumit. Pada akhirnya, sistem yang baik bukan yang tidak pernah gagal, melainkan yang mampu tetap berfungsi secara terbatas saat kegagalan pasti terjadi.
