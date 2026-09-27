@@ -42,9 +42,19 @@ graph LR
 ---
 
 ## 4. Analisis Masalah Coupling dan Trade-off
+Penyelesaian Masalah Coupling:
+Kombinasi arsitektur ini dapat mengatasi masalah tight coupling karena setiap modul berjalan secara terpisah dan tidak bergantung langsung satu sama lain. Dengan begitu, tim engineering dapat melakukan perubahan atau deploy ulang pada Modul Kurir tanpa mengganggu Modul Pesanan. Selain itu, jika Modul Kurir mengalami gangguan atau down, pelanggan masih dapat melakukan pemesanan dan pembayaran seperti biasa. Event penugasan kurir juga akan disimpan terlebih dahulu di Message Broker dan akan diproses ketika Modul Kurir sudah kembali berjalan.
 
+Trade-off Arsitektur:
+1. Kompleksitas Debugging yang Tinggi: Karena menggunakan pola Publish-Subscribe, proses mencari masalah menjadi lebih sulit. Misalnya, jika kurir gagal ditugaskan, tim engineering harus mengecek beberapa bagian. Mereka perlu memastikan apakah event berhasil dikirim oleh Modul Pesanan, apakah Message Broker berjalan dengan baik, atau apakah Modul Kurir berhasil menerima dan memproses pesan tersebut.
+
+2. Eventual Consistency: Data pada setiap modul tidak langsung diperbarui secara bersamaan. Ada jeda waktu antara status "Pesanan Berhasil" yang dilihat pelanggan dengan saat restoran atau kurir menerima informasi tersebut. Jika Message Broker mengalami gangguan atau prosesnya lambat, jeda waktu tersebut bisa menjadi lebih lama dan dapat menyebabkan kebingungan dalam proses operasional.
 
 ---
 
 ## Kesimpulan Kelompok
+Berdasarkan perancangan yang telah dibuat, kombinasi Service-Oriented Architecture (SOA) dan Publish-Subscribe (Event-Driven) dipilih untuk mengatasi masalah coupling pada sistem FoodGo. Komunikasi sinkron digunakan pada proses yang membutuhkan kepastian secara langsung, seperti validasi pesanan dan pembayaran. Sedangkan komunikasi asinkron digunakan untuk proses lanjutan seperti penerimaan pesanan oleh restoran dan penugasan kurir.
 
+Dengan arsitektur ini, setiap modul dapat berjalan lebih mandiri sehingga perubahan atau gangguan pada satu modul tidak langsung mengganggu modul lainnya. Selain itu, penggunaan Message Broker membantu menyimpan dan meneruskan event ketika modul tujuan mengalami gangguan.
+
+Namun, arsitektur ini juga memiliki beberapa kekurangan, seperti proses debugging yang lebih rumit dan adanya eventual consistency karena data tidak selalu diperbarui secara bersamaan. Oleh karena itu, penerapan arsitektur ini perlu disertai dengan logging, pemantauan sistem, dan pengelolaan event yang baik agar proses dalam FoodGo tetap dapat berjalan dengan stabil.
