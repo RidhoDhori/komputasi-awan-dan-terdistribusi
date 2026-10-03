@@ -1,11 +1,11 @@
 # Jurnal Proses — Tugas 3
 
 ## Percobaan tanpa Lock
-- Hasil `processed_count` yang didapat: ...
-- Kenapa bisa meleset (jelaskan mekanisme race condition dengan kata sendiri): ...
+- Hasil `processed_count` yang didapat: 64
+- Kenapa bisa meleset (jelaskan mekanisme race condition dengan kata sendiri): Hal ini terjadi karena adanya *race condition*, di mana beberapa *thread* membaca variabel `processed_count` secara bersamaan. Saat program dijeda sementara oleh fungsi `time.sleep`, *thread-thread* tersebut akhirnya mengolah nilai lama yang sama. Akibatnya, saat hasil penjumlahannya disimpan ulang, mereka saling menimpa perhitungan satu sama lain sehingga banyak pesanan yang tidak terhitung.
 
 ## Percobaan dengan Lock
-- Hasil `processed_count` setelah perbaikan: ...
+- Hasil `processed_count` setelah perbaikan: 100
 
 ## Kendala Docker
 - Error yang ditemui saat `docker build`/`docker run` dan cara memperbaikinya: ...

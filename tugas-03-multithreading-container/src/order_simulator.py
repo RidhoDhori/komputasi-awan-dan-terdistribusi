@@ -29,15 +29,15 @@ def process_order(order_id: int) -> None:
 
     # TODO 2: Tambahkan increment `processed_count` DI SINI.
     # VERSI TANPA LOCK
-    local_copy = processed_count
-    time.sleep(0.0001)
-    processed_count = local_copy + 1
+    # local_copy = processed_count
+    # time.sleep(0.0001)
+    # processed_count = local_copy + 1
 
     # VERSI DENGAN LOCK
-    # with lock:
-    #     local_copy = processed_count
-    #     time.sleep(0.0001) 
-    #     processed_count = local_copy + 1
+    with lock:
+        local_copy = processed_count
+        time.sleep(0.0001) 
+        processed_count = local_copy + 1
 
 def worker(order_ids: list) -> None:
     """Satu thread pekerja memproses sekumpulan order_id."""
