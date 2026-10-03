@@ -17,7 +17,7 @@ NUM_WORKERS = 10        # jumlah thread pekerja
 processed_count = 0
 
 # TODO 1: Buat objek Lock di sini untuk melindungi `processed_count`.
-# lock = threading.Lock()
+lock = threading.Lock()
 
 
 def process_order(order_id: int) -> None:
@@ -28,13 +28,16 @@ def process_order(order_id: int) -> None:
     time.sleep(random.uniform(0.001, 0.01))
 
     # TODO 2: Tambahkan increment `processed_count` DI SINI.
-    # Langkah 1: jalankan dulu tanpa lock (increment biasa: processed_count += 1)
-    #            dan buktikan hasil akhirnya sering salah (< NUM_ORDERS).
-    # Langkah 2: bungkus increment dengan `with lock:` dan buktikan hasilnya
-    #            selalu tepat NUM_ORDERS. Simpan bukti kedua kondisi ini
-    #            di JURNAL.md / folder bukti/.
-    pass
+    # VERSI TANPA LOCK
+    local_copy = processed_count
+    time.sleep(0.0001)
+    processed_count = local_copy + 1
 
+    # VERSI DENGAN LOCK
+    # with lock:
+    #     local_copy = processed_count
+    #     time.sleep(0.0001) 
+    #     processed_count = local_copy + 1
 
 def worker(order_ids: list) -> None:
     """Satu thread pekerja memproses sekumpulan order_id."""
@@ -49,8 +52,27 @@ def main() -> None:
     # threading.Thread per bagian yang menjalankan `worker(...)`,
     # start semua thread, lalu join semua thread sebelum lanjut.
     threads = []
-    # ... isi logika pembagian tugas & pembuatan thread di sini ...
+    
+    # Menghitung ukuran tiap bagian (chunk)
+    chunk_size = len(order_ids) // NUM_WORKERS
+    
+    for i in range(NUM_WORKERS):
+        start_index = i * chunk_size
+        # Pastikan sisa elemen (jika ada pembagian tidak rata) masuk ke thread terakhir
+        if i == NUM_WORKERS - 1:
+            end_index = len(order_ids)
+        else:
+            end_index = (i + 1) * chunk_size
+            
+        # Potong list order_ids untuk diberikan ke worker ini
+        chunk = order_ids[start_index:end_index]
+        
+        # Buat thread dan jalankan
+        t = threading.Thread(target=worker, args=(chunk,))
+        threads.append(t)
+        t.start()
 
+    # Menunggu semua thread selesai (join)
     for t in threads:
         t.join()
 
