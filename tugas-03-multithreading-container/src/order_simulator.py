@@ -62,7 +62,7 @@ def main() -> None:
         if i == NUM_WORKERS - 1:
             end_index = len(order_ids)
         else:
-            end_index = (i + 1) * chunk_size
+            end_index = start_index + chunk_size
             
         # Potong list order_ids untuk diberikan ke worker ini
         chunk = order_ids[start_index:end_index]
