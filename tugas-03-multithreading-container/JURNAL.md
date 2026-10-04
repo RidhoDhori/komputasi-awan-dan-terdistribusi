@@ -8,7 +8,7 @@
 - Hasil `processed_count` setelah perbaikan: 100
 
 ## Kendala Docker
-- Error yang ditemui saat `docker build`/`docker run` dan cara memperbaikinya: ...
+- Error yang ditemui saat `docker build`/`docker run` dan cara memperbaikinya: -
 
 ## Log Penggunaan AI (Level 2)
 
@@ -16,4 +16,4 @@
 
 | Tanggal | Tool AI | Prompt yang diberikan | Ringkasan saran/ide AI | Bagaimana diolah jadi tulisan/kode sendiri |
 |---|---|---|---|---|
-| ... | ... | ... | ... | ... |
+| ... | NO AI | ... | ... | ... |
