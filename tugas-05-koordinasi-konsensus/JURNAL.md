@@ -1,15 +1,15 @@
 # Jurnal Proses — Tugas 5
 
 ## Implementasi Bully
-- Kendala saat mengisi TODO 1-4: ...
+- Kendala saat mengisi TODO 1-4: -
 
 ## Skenario 1: Start normal
-- Leader yang terpilih: ...
-- Log/observasi: ...
+- Leader yang terpilih: 5
+- Log/observasi: Setiap node melakukan peer dengan ID yang lebih tinggi, setiap node menjadi leader dan mengirim COORDINATOR ke node dengan ID yang lebih tinggi, Merubah leader menjadi node dengan ID yang lebih tinggi dari node sekarang, mengirim election ulang.
 
 ## Skenario 2: Leader dimatikan
-- Leader baru yang terpilih: ...
-- Berapa lama waktu sampai leader baru terdeteksi: ...
+- Leader baru yang terpilih: 4
+- Berapa lama waktu sampai leader baru terdeteksi: 100 ms - 200 ms (Tergolong cepat)
 
 ## Log Penggunaan AI (Level 2)
 
@@ -17,4 +17,4 @@
 
 | Tanggal | Tool AI | Prompt yang diberikan | Ringkasan saran/ide AI | Bagaimana diolah jadi tulisan/kode sendiri |
 |---|---|---|---|---|
-| ... | ... | ... | ... | ... |
+| ... | ... | NO AI | ... | ... |
