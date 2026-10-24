@@ -2,7 +2,7 @@
 
 ## Implementasi find_successor
 
-- Kesalahan pertama yang ditemui: urutan node di `self.nodes` mengikuti urutan `join`, bukan urutan ID. Pada simulasi, node masuk dengan ID 177, 102, 40, 136. Jika daftar ini dipakai langsung, pencarian "node pertama dengan ID ≥ hash" bisa salah. Contohnya `kurir-001` (hash 50) akan berhenti di node 177, padahal seharusnya node 102. Kasus lain yang rawan adalah wrap-around: hash yang lebih besar dari semua ID node (misalnya 200) tidak punya node dengan ID ≥ hash, sehingga pencarian harus kembali ke node terkecil. **[KONFIRMASI: ganti dengan kesalahan yang benar-benar dialami kelompok jika berbeda]**
+- Kesalahan pertama yang ditemui: urutan node di `self.nodes` mengikuti urutan `join`, bukan urutan ID. Pada simulasi, node masuk dengan ID 177, 102, 40, 136. Jika daftar ini dipakai langsung, pencarian "node pertama dengan ID ≥ hash" bisa salah. Contohnya `kurir-001` (hash 50) akan berhenti di node 177, padahal seharusnya node 102. Kasus lain yang rawan adalah wrap-around: hash yang lebih besar dari semua ID node (misalnya 200) tidak punya node dengan ID ≥ hash, sehingga pencarian harus kembali ke node terkecil.
 - Cara memperbaikinya: ID node diurutkan dulu dengan `sorted(node_ids)` di `successor_in`, lalu dicari node pertama dengan ID ≥ `key_hash` menggunakan `next(...)`. Nilai default `ids[0]` menangani wrap-around, karena key yang melewati node terbesar kembali ke node terkecil (contoh: hash 200 → node 40). Fungsi ini dipakai bersama oleh `find_successor`, `join`, dan `leave`, sehingga aturan successor hanya ada di satu tempat.
 
 ## Skenario join/leave
