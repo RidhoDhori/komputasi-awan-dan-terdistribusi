@@ -140,7 +140,7 @@ sequenceDiagram
 
 | Aspek | Tanpa Jaminan Konsistensi | Dengan Read-Your-Writes |
 |---|---|---|
-| **Titik kegagalan** | Langkah 6-7: Bandung membaca saldo basi lalu menolak pesanan | Tidak ada, karena Bandung memeriksa versi sebelum menjawab |
+| **Titik kegagalan** | Langkah 6 Bandung membaca saldo basi lalu menolak pesanan | Tidak ada, karena Bandung memeriksa versi sebelum menjawab |
 | **Titik perbaikan** | - | Langkah 3 (aplikasi menyimpan token versi) dan langkah 6 (Bandung memeriksa versi) |
 | **Saat Bandung tertinggal** | Menjawab dengan data lama | Pembacaan diarahkan ke Jakarta yang sudah memiliki data terbaru |
 | **Saat Bandung sudah sesuai** | Menjawab dari data lokal | Menjawab dari data lokal, tanpa tambahan latensi |
