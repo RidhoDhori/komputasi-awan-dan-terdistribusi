@@ -50,14 +50,16 @@ Kebijakan **Level 2 (AI Assisted Idea Generation & Structuring)** berlaku — li
 - Sebagai bukti pemahaman konsep (bukan hafalan jawaban skenario FoodGo saja), `README.md` wajib menyertakan **satu skenario tambahan** yang kalian buat sendiri (mis. kasus lain di aplikasi ojek online) dan menentukan model konsistensi yang tepat untuk skenario tambahan tersebut.
 
 ## Analisis
-### 1. Model Konsistensi
-Sistem FoodGo sebaiknya menggunakan Eventual Consistency yang dilengkapi Client-Centric Consistency melalui Read-Your-Writes.
+#### 1. Model Konsistensi
+FoodGo sebaiknya memakai **Eventual Consistency yang dilengkapi Client-Centric Consistency (Read-Your-Writes)**.
 
-Eventual Consistency memungkinkan server Jakarta dan Bandung memiliki data berbeda sementara hingga proses replikasi selesai. Namun, pendekatan ini saja tidak cukup untuk sistem e-wallet karena perbedaan saldo dapat menyebabkan transaksi ditolak meskipun saldo pelanggan sebenarnya mencukupi.
+**Dampak bisnis.** Saldo e-wallet adalah data uang milik pelanggan. Jika saldo yang terbaca basi, pelanggan yang sebenarnya punya saldo cukup ditolak pesanannya tepat setelah top-up. Akibatnya pesanan batal, pelanggan komplain ke layanan pelanggan, dan kepercayaan terhadap dompet digital menurun. Bandingkan dengan "jumlah like" di media sosial: angka yang salah beberapa detik tidak merugikan siapa pun dan tidak membatalkan transaksi, sehingga Eventual Consistency murni sudah cukup di sana. Karena dampak salah-baca pada saldo jauh lebih mahal, Eventual saja tidak cukup untuk kasus ini.
 
-Sequential Consistency dapat menjaga urutan operasi yang sama pada seluruh replika, tetapi membutuhkan sinkronisasi lebih ketat yang berpotensi menambah keterlambatan. Oleh karena itu, Read-Your-Writes lebih sesuai karena pelanggan tetap dapat membaca saldo terbarunya melalui server yang sudah memiliki versi data terbaru, meskipun replika lain belum tersinkronisasi.
+**Kenapa tidak Sequential penuh.** Sequential Consistency membuat semua replika melihat urutan operasi yang sama, tetapi setiap operasi harus menunggu koordinasi antar-kota. Itu menambah latensi di setiap transaksi dan menurunkan ketersediaan: jika jaringan Jakarta–Bandung terganggu, replika tidak boleh menjawab sampai sinkron kembali, padahal mayoritas pembacaan saldo tidak bermasalah. Biaya itu terlalu besar untuk masalah yang sebenarnya sempit, yaitu pelanggan harus melihat hasil tulisannya sendiri.
 
-### 2. Solusi Client-Centric Consistency menggunakan Read-Your-Writes
+**Kesimpulan.** Replika dibiarkan sinkron secara longgar (Eventual), tetapi pelanggan dijamin membaca saldo yang setidaknya sama barunya dengan operasi terakhirnya sendiri (Read-Your-Writes). Latensi tambahan hanya terjadi pada pelanggan yang replikanya tertinggal.
+
+#### 2. Solusi Client-Centric Consistency menggunakan Read-Your-Writes
 
 Read-Your-Writes merupakan mekanisme konsistensi yang memastikan pengguna dapat membaca kembali perubahan data yang sebelumnya telah dilakukan oleh pengguna tersebut.
 
@@ -72,7 +74,11 @@ Alur penerapannya adalah:
 6. Jika versi Bandung sudah sesuai, pelanggan dapat membaca saldo langsung dari Bandung.
 Dengan mekanisme tersebut, pelanggan tetap dapat melihat saldo terbaru tanpa harus menunggu seluruh replika selesai melakukan sinkronisasi.
 
-### 3. Diagram alir urutan (sequence diagram)
+**Alternatif: polling.** Bandung (atau aplikasi) menunggu sampai versi lokal Bandung mencapai versi yang dibutuhkan, lalu membaca. Ini tidak menambah beban ke Jakarta, tetapi latensinya tidak pasti dan perlu batas waktu (timeout). Jika timeout terlewati, sistem jatuh kembali ke redirect ke Jakarta.
+
+**Batasan.** Read-Your-Writes hanya menjamin pelanggan melihat tulisannya sendiri, bukan mencegah konflik penulisan. Jika pesanan memotong saldo dari dua perangkat hampir bersamaan, kedua replika bisa sama-sama menerima dan saldo menjadi negatif (double-spend). Karena itu **pemotongan saldo ditulis ke satu server otoritatif (Jakarta) dengan compare-and-set**: tulisan hanya berhasil jika versi yang dibaca masih sama dengan versi terbaru. Jika gagal, aplikasi membaca ulang saldo dan mencoba lagi. Dengan begitu pembacaan boleh dilayani replika mana pun, tetapi penulisan saldo tetap terurut.
+
+#### 3. Diagram alir urutan (sequence diagram)
 
 ### 3.1 Skenario TANPA jaminan konsistensi (bug terjadi)
 
@@ -145,3 +151,39 @@ sequenceDiagram
 | **Saat Bandung tertinggal** | Menjawab dengan data lama | Pembacaan diarahkan ke Jakarta yang sudah memiliki data terbaru |
 | **Saat Bandung sudah sesuai** | Menjawab dari data lokal | Menjawab dari data lokal, tanpa tambahan latensi |
 | **Trade-off** | Cepat tetapi salah | Latensi tambahan hanya pada permintaan pelanggan yang replikanya tertinggal |
+
+#### 4. Skenario Tambahan: Aplikasi Ojek Online
+
+Dalam satu aplikasi ojek online terdapat dua data dengan kebutuhan konsistensi yang berbeda:
+
+| Data | Kebutuhan | Model yang dipilih | Alasan |
+|---|---|---|---|
+| Posisi driver di peta | Boleh terlambat 1–3 detik | **Eventual Consistency** | Posisi terus berubah dan akan segera tertimpa data baru. Titik driver yang meleset sedikit di peta tidak merugikan siapa pun, dan sinkronisasi ketat justru memperlambat pembaruan posisi ribuan driver. |
+| Status "order diambil driver" | Tidak boleh ada dua driver mengambil order yang sama | **Konsistensi kuat (satu pemilik data, penulisan terurut)** | Jika dua replika sama-sama melihat order masih "menunggu", dua driver bisa sama-sama berhasil mengambilnya. Akibatnya satu pelanggan dijemput dua driver, satu driver rugi waktu, dan satu order bermasalah. |
+
+Selain itu, **Read-Your-Writes** dipakai agar driver yang baru menekan "ambil order" langsung melihat statusnya sendiri sebagai "order diambil", walau replika di dekatnya belum sinkron.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as Driver A
+    actor B as Driver B
+    participant J as Server Pemilik Order (Jakarta)
+    participant S as Server Replika (Bandung)
+
+    Note over J,S: Order #7 berstatus MENUNGGU di kedua server
+
+    A->>J: ambil order #7
+    B->>S: ambil order #7
+    S->>J: teruskan klaim order #7 ke server pemilik (bukan memutuskan sendiri)
+
+    J->>J: klaim A masuk lebih dulu, status = DIAMBIL oleh A (versi 2)
+    J-->>A: BERHASIL + token versi = 2
+    J->>J: klaim B tiba, order sudah DIAMBIL (cek versi gagal)
+    J-->>S: DITOLAK, order sudah diambil
+    S-->>B: Order sudah diambil driver lain
+
+    J-)S: replikasi status DIAMBIL (versi 2)
+```
+
+Dari kedua data ini terlihat bahwa satu aplikasi bisa memakai beberapa model konsistensi sekaligus, tergantung dampak bisnis tiap data. Konsistensi kuat dipakai hanya pada data yang berisiko merugikan jika salah, supaya sistem tetap cepat untuk data lain.
