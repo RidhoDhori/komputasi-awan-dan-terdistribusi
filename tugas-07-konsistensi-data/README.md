@@ -74,7 +74,7 @@ Dengan mekanisme tersebut, pelanggan tetap dapat melihat saldo terbaru tanpa har
 
 ### 3. Diagram alir urutan (sequence diagram)
 
-#### 3.1 Skenario TANPA jaminan konsistensi (bug terjadi)
+### 3.1 Skenario TANPA jaminan konsistensi (bug terjadi)
 
 ```mermaid
 sequenceDiagram
@@ -101,13 +101,14 @@ sequenceDiagram
     R-)B: update tiba: saldo 120.000 (versi 2)
     Note over J,B: Replika akhirnya konsisten, tetapi pesanan sudah gagal
 ```
-#### 3.2 Skenario Dengan Read-Your-Writes (bug teratasi)
+
+### 3.2 Skenario DENGAN Read-Your-Writes (bug teratasi)
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor P as Pelanggan (App)
-    participant J as Server Jakarta (Primary)
+    participant J as Server Jakarta
     participant R as Proses Replikasi
     participant B as Server Bandung
 
@@ -116,35 +117,31 @@ sequenceDiagram
     P->>J: WRITE: top-up Rp100.000
     J->>J: saldo = 120.000 (versi 2)
     J-->>P: OK, saldo 120.000 + token versi = 2
-    Note left of P: TITIK PERBAIKAN 1: klien menyimpan last_write_version = 2
+    Note left of P: TITIK PERBAIKAN 1: aplikasi menyimpan versi terakhir = 2
     J-)R: kirim update ke Bandung (asinkron, delay)
 
-    P->>B: pesan makanan Rp80.000 + min_version = 2
-    B->>B: bandingkan versi lokal (1) dengan min_version (2)
-    Note right of B: TITIK PERBAIKAN 2: Bandung tahu datanya belum cukup baru
+    P->>B: pesan makanan Rp80.000 + versi dibutuhkan = 2
+    B->>B: periksa versi data Bandung
+    Note right of B: TITIK PERBAIKAN 2: Bandung membandingkan versinya dengan versi yang dibutuhkan pelanggan
 
-    alt Update replikasi tiba sebelum timeout
-        R-)B: update: saldo 120.000 (versi 2)
-        B->>B: versi lokal 2 ≥ min_version 2, lanjut
-    else Timeout, replikasi masih lambat
-        B->>J: forward request ke Jakarta (primary)
+    alt Versi Bandung (1) lebih lama dari versi dibutuhkan (2)
+        B->>J: arahkan pembacaan saldo ke Jakarta
         J-->>B: saldo 120.000 (versi 2)
+    else Versi Bandung sudah sesuai
+        B->>B: baca saldo langsung dari Bandung
     end
 
     B->>B: saldo 120.000 ≥ 80.000, pesanan diterima
-    B->>J: WRITE: debit Rp80.000 (conditional: versi harus 2)
-    J->>J: saldo = 40.000 (versi 3)
-    J-->>B: OK, versi = 3
-    B-->>P: Pesanan BERHASIL, saldo 40.000 + token versi = 3
-    Note left of P: Klien memperbarui last_write_version = 3
-    J-)R: replikasi update debit ke Bandung
+    B-->>P: Pesanan BERHASIL
+    R-)B: update replikasi tiba, Bandung ikut tersinkronisasi
 ```
 
-#### 3.3 Penjelasan
+### 3.3 Penjelasan
+
 | Aspek | Tanpa Jaminan Konsistensi | Dengan Read-Your-Writes |
 |---|---|---|
-| **Titik kegagalan** | Langkah 6-7: Bandung membaca saldo basi (versi 1) lalu menolak pesanan | Tidak ada, karena Bandung memeriksa `min_version` sebelum menjawab |
-| **Titik perbaikan** | - | Langkah 3 (klien menyimpan token versi) dan langkah 6 (replika memvalidasi versi) |
-| **Saat replika tertinggal** | Menjawab dengan data lama | Menunggu replikasi (timeout), lalu forward ke Jakarta |
-| **Operasi debit** | Tidak ada pengamanan | Conditional write di Jakarta, mencegah double spend |
-| **Trade-off** | Cepat tetapi salah | Latensi tambahan hanya untuk request dari pelanggan yang replikanya tertinggal |
+| **Titik kegagalan** | Langkah 6-7: Bandung membaca saldo basi lalu menolak pesanan | Tidak ada, karena Bandung memeriksa versi sebelum menjawab |
+| **Titik perbaikan** | - | Langkah 3 (aplikasi menyimpan token versi) dan langkah 6 (Bandung memeriksa versi) |
+| **Saat Bandung tertinggal** | Menjawab dengan data lama | Pembacaan diarahkan ke Jakarta yang sudah memiliki data terbaru |
+| **Saat Bandung sudah sesuai** | Menjawab dari data lokal | Menjawab dari data lokal, tanpa tambahan latensi |
+| **Trade-off** | Cepat tetapi salah | Latensi tambahan hanya pada permintaan pelanggan yang replikanya tertinggal |
