@@ -48,3 +48,26 @@ tugas-07-konsistensi-data/
 Kebijakan **Level 2 (AI Assisted Idea Generation & Structuring)** berlaku — lihat [`../RUBRIK-UMUM.md`](../RUBRIK-UMUM.md). Boleh bertanya konsep umum consistency model ke AI untuk brainstorming; **tidak boleh** meminta AI menuliskan analisis akhir/sequence diagram atau isi `# TODO` di `src/replica_simulation.py` yang tinggal ditempel. Catat pemakaian AI di "Log Penggunaan AI" pada `JURNAL.md`.
 
 - Sebagai bukti pemahaman konsep (bukan hafalan jawaban skenario FoodGo saja), `README.md` wajib menyertakan **satu skenario tambahan** yang kalian buat sendiri (mis. kasus lain di aplikasi ojek online) dan menentukan model konsistensi yang tepat untuk skenario tambahan tersebut.
+
+## Analisis
+### 1. Model Konsistensi
+Sistem FoodGo sebaiknya menggunakan Eventual Consistency yang dilengkapi Client-Centric Consistency melalui Read-Your-Writes.
+
+Eventual Consistency memungkinkan server Jakarta dan Bandung memiliki data berbeda sementara hingga proses replikasi selesai. Namun, pendekatan ini saja tidak cukup untuk sistem e-wallet karena perbedaan saldo dapat menyebabkan transaksi ditolak meskipun saldo pelanggan sebenarnya mencukupi.
+
+Sequential Consistency dapat menjaga urutan operasi yang sama pada seluruh replika, tetapi membutuhkan sinkronisasi lebih ketat yang berpotensi menambah keterlambatan. Oleh karena itu, Read-Your-Writes lebih sesuai karena pelanggan tetap dapat membaca saldo terbarunya melalui server yang sudah memiliki versi data terbaru, meskipun replika lain belum tersinkronisasi.
+
+### 2. Solusi Client-Centric Consistency menggunakan Read-Your-Writes
+
+Read-Your-Writes merupakan mekanisme konsistensi yang memastikan pengguna dapat membaca kembali perubahan data yang sebelumnya telah dilakukan oleh pengguna tersebut.
+
+Pada sistem FoodGo, mekanisme ini diterapkan dengan menggunakan version number pada setiap perubahan saldo.
+
+Alur penerapannya adalah:
+1. Pelanggan melakukan top-up melalui server Jakarta.
+2. Server Jakarta memperbarui saldo dan menaikkan nomor versi data.
+3. Server Jakarta mengirimkan informasi replikasi ke Bandung dengan jeda waktu tertentu.
+4. Ketika pelanggan membaca saldo melalui Bandung, sistem memeriksa versi data yang tersedia.
+5. Jika versi Bandung lebih lama daripada versi yang dibutuhkan pelanggan, sistem mengarahkan permintaan pembacaan ke Jakarta yang sudah memiliki data terbaru.
+6. Jika versi Bandung sudah sesuai, pelanggan dapat membaca saldo langsung dari Bandung.
+Dengan mekanisme tersebut, pelanggan tetap dapat melihat saldo terbaru tanpa harus menunggu seluruh replika selesai melakukan sinkronisasi.
