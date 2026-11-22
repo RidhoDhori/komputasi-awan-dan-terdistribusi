@@ -80,3 +80,19 @@ Karena setiap subsistem memiliki tingkat sensitivitas data dan kebutuhan kontrol
 | **LMS Pelatihan Operator Dukcapil, Portal SOP Internal & Dashboard Statistik Demografi Agregat (Non-PII)** | **SaaS** | Public / Gov-SaaS Terisolasi | Komponen ini murni beroperasi pada data non-pribadi (materi pelatihan, panduan operasional, dan angka agregat demografi yang telah teranonimisasi penuh). Pemanfaatan SaaS mempercepat adopsi bagi ribuan kantor Dukcapil dengan biaya pemeliharaan minimal. |
 
 ---
+
+### 3. Risiko dan Mitigasi
+| Risiko | Mitigasi |
+|---|---|
+| Kebocoran data saat integrasi Private Cloud dan Public Cloud karena API dapat menjadi celah keamanan. | Data pribadi tidak disimpan di Public Cloud. Gunakan API terenkripsi, autentikasi, dan pembatasan akses. |
+| Serangan dari Public Cloud menuju Private Cloud, misalnya melalui portal publik atau API. | Terapkan network segmentation, firewall/WAF, rate limiting, dan Zero Trust. Public Cloud tidak boleh memiliki akses langsung ke database utama. |
+| Gangguan layanan Public Cloud saat terjadi lonjakan akses. | Gunakan redundancy dan failover, serta siapkan kapasitas cadangan untuk layanan yang bersifat kritis. |
+
+---
+
+### 4. Perbandingan dengan Alternatif: Public Cloud Murni
+Public Cloud murni ditolak karena meskipun memiliki rapid elasticity, resource pooling, dan skalabilitas yang baik, pemerintah memiliki kontrol yang lebih terbatas terhadap infrastruktur tempat data sensitif diproses.
+
+Hybrid Cloud lebih tepat karena data inti seperti NIK, alamat, dan biometrik tetap berada di Private Cloud, sedangkan Public Cloud digunakan untuk layanan non-sensitif yang membutuhkan skalabilitas tinggi. Dengan demikian, kebutuhan keamanan dan kontrol tetap terpenuhi tanpa mengorbankan skalabilitas.
+
+---
