@@ -1,10 +1,21 @@
 # Jurnal Proses — Tugas 9
 
 ## Diskusi deployment model
-- Opsi yang dipertimbangkan dan kenapa akhirnya memilih salah satu: ...
+- Opsi yang dipertimbangkan dan kenapa akhirnya memilih salah satu:  
+  KKelompok kami membandingkan empat opsi utama: *Public Cloud*, *Private Cloud*, *Community Cloud*, dan *Hybrid Cloud*.
+  - **Public Cloud murni** langsung kami coret di awal diskusi karena data kependudukan (NIK, alamat, dan biometrik) tergolong data pribadi sangat sensitif di bawah UU No. 27 Tahun 2022 (UU PDP) dan secara studi kasus wajib berada dalam kendali penuh negara.
+  - **Community Cloud** sempat dipertimbangkan untuk menghubungkan Dukcapil, kepolisian, dan perbankan dalam satu infrastruktur bersama. Namun opsi ini kami batalkan karena perbankan adalah entitas swasta dengan standar keamanan yang beragam, serta infrastruktur *community* yang statis tetap rentan kewalahan menghadapi lonjakan trafik masyarakat umum saat Pemilu dan PPDB.
+  - Perdebatan utama kelompok ada di antara **Private Cloud murni** vs. **Hybrid Cloud**. Private Cloud murni memang paling sederhana dari sisi kendali data, tetapi jika harus menampung lonjakan akses nasional saat Pemilu 5 tahunan atau pembukaan PPDB, pemerintah harus membeli kapasitas server fisik sebesar beban puncak (*over-provisioning*) yang bakal banyak menganggur di hari biasa, atau malah *downtime* jika kapasitasnya tidak cukup.
+  - Akhirnya kami sepakat memilih **Hybrid Cloud** dengan pemisahan zona yang tegas: **Zona Private Cloud** (Pusat Data Nasional) khusus menyimpan *master database* NIK, biometrik, HSM enkripsi, dan mesin pencocokan inti; sementara **Zona Public Cloud** (region Indonesia) hanya dipakai sebagai lapisan *edge* yang *stateless* (CDN, WAF, portal pengecekan status DPT/PPDB, dan antrean) agar bisa *auto-scale* tanpa menyimpan PII secara persisten (*Zero-PII at Rest*).
+- **Pembahasan risiko & skenario tandingan:**
+  Kami mendiskusikan titik rawan dari arsitektur Hybrid ini, yaitu risiko *stale data* (keterlambatan sinkronisasi status antara Private dan Public), risiko kebocoran NIK saat *in-transit* atau *caching* di lapisan publik, serta risiko penyalahgunaan kredensial API oleh ribuan instansi mitra. Dari diskusi tersebut, kami juga merumuskan dua skenario tandingan sendiri, yaitu putusnya jalur penghubung (*network partition*) antara zona Private dan Public saat hari-H Pemilu/PPDB serta serangan DDoS yang memicu *Denial of Wallet*, lalu merancang mitigasi *graceful degradation*, *hard cap*, dan *circuit breaker*.
 
 ## Diskusi service model per komponen
-- ...
+- Kelompok memetakan setiap subsistem berdasarkan sensitivitas data dan tingkat kendali infrastruktur yang dibutuhkan:
+  - **Core Database Kependudukan, HSM Enkripsi, & Core Biometric Matching Engine (IaaS - Private Cloud):** Butuh kontrol penuh sampai level sistem operasi, segmentasi jaringan, enkripsi disk, serta alokasi CPU/GPU terdedikasi agar data biometrik mentah tidak pernah menyentuh lapisan *managed* pihak ketiga.
+  - **Core API Gateway untuk KYC Bank, Kepolisian, dan Dukcapil (PaaS - Private Cloud):** Memudahkan tim pengembang pemerintah fokus pada logika validasi, RBAC, dan *rate limiting* tanpa terbebani *patching* server dasar, sambil tetap menjaga jalur pemrosesan berada di dalam jaringan privat negara.
+  - **Portal Publik Cek Status DPT/PPDB, Edge API Proxy, & Antrean Permintaan (PaaS - Public Cloud, Stateless):** Dipilih agar antarmuka publik dapat memanfaatkan *auto-scaling* otomatis dan *managed message queue* saat lonjakan trafik jutaan pengguna.
+  - **Revisi hasil diskusi pada komponen SaaS:** Awalnya kami sempat menempatkan sistem *helpdesk* pengaduan warga di **SaaS (Public Cloud)** agar cepat dipakai. Namun setelah dikoreksi bersama dalam diskusi, tiket pengaduan warga pasti memuat data sensitif (NIK, nama lengkap, hingga foto KTP), sehingga sistem tiket pengaduan akhirnya dipindahkan ke **PaaS di Private Cloud**. Layanan **SaaS** lalu dibatasi ketat hanya untuk kebutuhan murni non-PII, yaitu LMS pelatihan operator Dukcapil, repositori SOP internal, dan *dashboard* statistik demografi agregat yang sudah dianonimisasi.
 
 ## Log Penggunaan AI (Level 2)
 
@@ -12,4 +23,4 @@
 
 | Tanggal | Tool AI | Prompt yang diberikan | Ringkasan saran/ide AI | Bagaimana diolah jadi tulisan/kode sendiri |
 |---|---|---|---|---|
-| ... | ... | ... | ... | ... |
+| 2026-11-21 | Gemini | "Jelaskan ringkas 5 karakteristik NIST SP 800-145 dan berikan ide poin-poin risiko umum yang perlu diperhatikan saat memakai Hybrid Cloud untuk sistem pemerintahan berskala besar." | Memberikan penyegaran definisi 5 karakteristik NIST (*on-demand self-service* hingga *measured service*), gambaran umum pemisahan *workload* sensitif vs. elastis pada Hybrid Cloud, serta kategori risiko umum seperti keterlambatan sinkronisasi, keamanan transmisi antar-segmen, dan kontrol akses lintas pihak. | Kelompok memakai daftar karakteristik NIST dan kategori risiko tersebut hanya sebagai kerangka (*outline*) diskusi. Seluruh analisis akhir kami susun dan kontekstualisasikan sendiri ke studi kasus kependudukan Indonesia, termasuk mengaitkannya ke UU PDP No. 27/2022 dan PP No. 71/2019, merevisi pemetaan sistem pengaduan warga dari SaaS ke Private PaaS, memilih *Private Cloud* murni sebagai pembanding yang ditolak, merancang diagram arsitektur, serta membuat dua skenario tandingan sendiri (*network partition* dan DDoS/*Denial of Wallet*). |
